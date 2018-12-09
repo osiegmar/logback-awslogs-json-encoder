@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE import-control PUBLIC "-//Puppy Crawl//DTD Import Control 1.1//EN" "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
+<import-control pkg="de.siegmar.logbackawslogsjsonencoder">
+
+    <allow pkg="java.io"/>
+    <allow pkg="java.net"/>
+    <allow pkg="java.nio"/>
+    <allow pkg="java.security"/>
+    <allow pkg="java.text"/>
+    <allow pkg="java.time"/>
+    <allow pkg="java.util"/>
+
+    <allow pkg="javax.net"/>
+
+    <allow pkg="ch.qos.logback"/>
+
+    <allow pkg="org.slf4j"/>
+    <allow pkg="org.junit"/>
+
+    <allow pkg="de.siegmar.logbackawslogsjsonencoder"/>
+
+</import-control>
