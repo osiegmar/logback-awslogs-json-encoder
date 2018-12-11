@@ -103,7 +103,7 @@ Enhanced configuration:
             <includeCallerData>false</includeCallerData>
             <includeRootCauseData>false</includeRootCauseData>
             <messageLayout class="ch.qos.logback.classic.PatternLayout">
-                <pattern>%m</pattern>
+                <pattern>%m%nopex</pattern>
             </messageLayout>
             <fullMessageLayout class="ch.qos.logback.classic.PatternLayout">
                 <pattern>%m%n</pattern>
