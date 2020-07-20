@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.LineReader;
 
 import ch.qos.logback.classic.Level;
@@ -158,7 +158,7 @@ public class AwsJsonLogEncoderTest {
 
         final LoggingEvent event = simpleLoggingEvent(logger, null);
 
-        HashMap<String, String> mdcMap = new HashMap<>();
+        final Map<String, String> mdcMap = new HashMap<>();
         mdcMap.put("mdc_key", "mdc_value");
         mdcMap.put("mdc_key_nullvalue", null);
         event.setMDCPropertyMap(mdcMap);
