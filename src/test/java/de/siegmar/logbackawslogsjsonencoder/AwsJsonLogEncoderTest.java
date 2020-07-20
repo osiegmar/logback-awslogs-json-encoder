@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -157,7 +158,10 @@ public class AwsJsonLogEncoderTest {
 
         final LoggingEvent event = simpleLoggingEvent(logger, null);
 
-        event.setMDCPropertyMap(ImmutableMap.of("mdc_key", "mdc_value"));
+        HashMap<String, String> mdcMap = new HashMap<>();
+        mdcMap.put("mdc_key", "mdc_value");
+        mdcMap.put("mdc_key_nullvalue", null);
+        event.setMDCPropertyMap(mdcMap);
 
         final String logMsg = produce(event);
 
