@@ -1,5 +1,4 @@
-Logback awslogs JSON encoder
-============================
+# Logback awslogs JSON encoder
 
 [![Build Status](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder.svg?branch=master)](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.siegmar/logback-awslogs-json-encoder/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.siegmar/logback-awslogs-json-encoder)
@@ -8,33 +7,7 @@ Logback encoder for producing JSON output that is handled by
 AWS [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html). This
 library has no external dependencies and thus very light footprint.
 
-
-Latest release
---------------
-
-The most recent release is 1.0.0, released December 9, 2018.
-
-To add a dependency using Maven, use the following:
-
-```xml
-<dependency>
-    <groupId>de.siegmar</groupId>
-    <artifactId>logback-awslogs-json-encoder</artifactId>
-    <version>1.0.0</version>
-</dependency>
-```
-
-To add a dependency using Gradle:
-
-```gradle
-dependencies {
-    compile 'de.siegmar:logback-awslogs-json-encoder:1.0.0'
-}
-```
-
-
-Features
---------
+## Features
 
 - Forwarding of MDC (Mapped Diagnostic Context)
 - Forwarding of caller data
@@ -43,15 +16,13 @@ Features
 - No runtime dependencies beside Logback
 
 
-Requirements
-------------
+## Requirements
 
 - Java 8
 - Logback 1.2.3
 
 
-Prerequisites
--------------
+## Prerequisites
 
 Ensure that the task definition of your ECS task uses the `awslogs` log driver with 
 the option `awslogs-datetime-format` set to `%Y-%m-%dT%H:%M:%S.%f%z`.
@@ -71,8 +42,7 @@ A full example (excerpt from a full task definition JSON) could look like this:
 }
 ```
 
-Example
--------
+## Example
 
 Simple configuration:
 
@@ -122,8 +92,7 @@ Enhanced configuration:
 </configuration>
 ```
 
-Configuration
--------------
+## Configuration
 
 `de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoder`
 
@@ -141,8 +110,7 @@ Configuration
 * **staticFields**: Additional, static fields to include. Defaults: none.
 
 
-Contribution
-------------
+## Contribution
 
 - Fork
 - Code
@@ -151,8 +119,7 @@ Contribution
 - Send me a pull request
 
 
-Copyright
----------
+## Copyright
 
 Copyright (C) 2018 Oliver Siegmar
 
