@@ -28,10 +28,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Marker;
 
@@ -248,18 +248,15 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
                 }
 
                 if (includeMdcData) {
-                    buildMdcData(event.getMDCPropertyMap())
-                        .ifPresent(mdc -> json.appendToJSON("mdc", mdc));
+                    append(json, "mdc", buildMdcData(event.getMDCPropertyMap()));
                 }
 
                 if (includeCallerData) {
-                    buildCallerData(event.getCallerData())
-                        .ifPresent(cd -> json.appendToJSON("caller_data", cd));
+                    append(json, "caller_data", buildCallerData(event.getCallerData()));
                 }
 
                 if (includeRootCauseData) {
-                    buildRootExceptionData(event.getThrowableProxy())
-                        .ifPresent(red -> json.appendToJSON("root_exception_data", red));
+                    append(json, "root_exception_data", buildRootExceptionData(event.getThrowableProxy()));
                 }
 
                 if (!staticFields.isEmpty()) {
@@ -275,31 +272,28 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         return bos.toByteArray();
     }
 
-    private Optional<Map<String, Object>> buildMdcData(final Map<String, String> mdcProperties) {
+    private void append(final SimpleJsonEncoder json, final String key, final Map<String, Object> values) {
+        if (!values.isEmpty()) {
+            json.appendToJSON(key, values);
+        }
+    }
+
+    private Map<String, Object> buildMdcData(final Map<String, String> mdcProperties) {
         if (mdcProperties == null || mdcProperties.isEmpty()) {
-            return Optional.empty();
+            return Collections.emptyMap();
         }
 
         final Map<String, Object> additionalFields = new HashMap<>();
-        for (final Map.Entry<String, String> entry : mdcProperties.entrySet()) {
-            final String value = entry.getValue();
-            if (value == null) {
-                continue;
-            }
+        mdcProperties.entrySet().stream()
+            .filter(entry -> entry.getValue() != null)
+            .forEach(entry -> addField(additionalFields, entry.getKey(), entry.getValue()));
 
-            addField(additionalFields, entry.getKey(), value);
-        }
-
-        if (additionalFields.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(additionalFields);
+        return additionalFields;
     }
 
-    private Optional<Map<String, Object>> buildCallerData(final StackTraceElement[] callerData) {
+    private Map<String, Object> buildCallerData(final StackTraceElement[] callerData) {
         if (callerData == null || callerData.length == 0) {
-            return Optional.empty();
+            return Collections.emptyMap();
         }
 
         final StackTraceElement first = callerData[0];
@@ -310,20 +304,20 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         callerDataMap.put("source_class_name", first.getClassName());
         callerDataMap.put("source_line_number", first.getLineNumber());
 
-        return Optional.of(callerDataMap);
+        return callerDataMap;
     }
 
-    private Optional<Map<String, Object>> buildRootExceptionData(final IThrowableProxy throwableProxy) {
+    private Map<String, Object> buildRootExceptionData(final IThrowableProxy throwableProxy) {
         final IThrowableProxy rootException = getRootException(throwableProxy);
         if (rootException == null) {
-            return Optional.empty();
+            return Collections.emptyMap();
         }
 
         final Map<String, Object> exceptionDataMap = new HashMap<>(2);
         exceptionDataMap.put("root_cause_class_name", rootException.getClassName());
         exceptionDataMap.put("root_cause_message", rootException.getMessage());
 
-        return Optional.of(exceptionDataMap);
+        return exceptionDataMap;
     }
 
     private IThrowableProxy getRootException(final IThrowableProxy throwableProxy) {
