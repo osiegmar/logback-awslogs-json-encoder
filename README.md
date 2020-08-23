@@ -1,7 +1,7 @@
 Logback awslogs JSON encoder
 ============================
 
-[![Build Status](https://api.travis-ci.org/osiegmar/logback-awslogs-json-encoder.svg)](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder)
+[![Build Status](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder.svg?branch=master)](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.siegmar/logback-awslogs-json-encoder/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.siegmar/logback-awslogs-json-encoder)
 
 Logback encoder for producing JSON output that is handled by
