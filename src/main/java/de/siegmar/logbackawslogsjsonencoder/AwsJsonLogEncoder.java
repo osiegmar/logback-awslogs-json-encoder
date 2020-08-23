@@ -282,7 +282,16 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
         final Map<String, Object> additionalFields = new HashMap<>();
         for (final Map.Entry<String, String> entry : mdcProperties.entrySet()) {
-            addField(additionalFields, entry.getKey(), entry.getValue());
+            final String value = entry.getValue();
+            if (value == null) {
+                continue;
+            }
+
+            addField(additionalFields, entry.getKey(), value);
+        }
+
+        if (additionalFields.isEmpty()) {
+            return Optional.empty();
         }
 
         return Optional.of(additionalFields);
