@@ -1,107 +1,86 @@
 plugins {
-    id "com.github.spotbugs" version "1.6.6"
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id 'checkstyle'
+    id 'com.github.spotbugs' version '4.5.0'
 }
 
-apply plugin: 'java'
-apply plugin: 'checkstyle'
-apply plugin: 'signing'
-apply plugin: 'maven-publish'
-
 group = "de.siegmar"
-archivesBaseName = "logback-awslogs-json-encoder"
 version = "1.1.0"
 
-sourceCompatibility = 1.8
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
-    compile 'ch.qos.logback:logback-classic:1.2.3'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
-    testCompile 'com.google.guava:guava:27.0.1-jre'
-    testCompile 'com.fasterxml.jackson.core:jackson-databind:2.9.7'
+    api 'ch.qos.logback:logback-classic:1.2.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
+    testImplementation 'com.google.guava:guava:28.1-jre'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
 }
 
 test {
     useJUnitPlatform()
 }
 
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
-checkstyle {
-    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
-    configProperties = [samedir: "${rootDir}/config/checkstyle", project_loc: "${rootDir}"]
-}
-
-if (hasProperty('signing.keyId')) {
-    signing {
-        sign configurations.archives
+tasks.matching {task -> task.name.startsWith('spotbugs')}.forEach {
+    it.reports {
+        html.enabled = true
+        xml.enabled = false
     }
 }
 
-if (hasProperty('ossrhUsername')) {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId = jar.baseName
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = "logback-awslogs-json-encoder"
+            from components.java
 
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
-
-                pom {
-                    name = 'Logback awslogs JSON encoder'
-                    description = 'Logback encoder for producing JSON formatted log output for Amazon CloudWatch Logs Insights.'
+            pom {
+                name = 'Logback awslogs JSON encoder'
+                description = 'Logback encoder for producing JSON formatted log output for Amazon CloudWatch Logs Insights.'
+                url = 'https://github.com/osiegmar/logback-awslogs-json-encoder'
+                licenses {
+                    license {
+                        name = 'GNU Lesser General Public License version 2.1'
+                        url = 'http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+                    }
+                }
+                scm {
                     url = 'https://github.com/osiegmar/logback-awslogs-json-encoder'
-                    licenses {
-                        license {
-                            name = 'GNU Lesser General Public License version 2.1'
-                            url = 'http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
-                        }
-                    }
-                    scm {
-                        url = 'https://github.com/osiegmar/logback-awslogs-json-encoder'
-                        connection = 'scm:git:https://github.com/osiegmar/logback-awslogs-json-encoder.git'
-                    }
-                    developers {
-                        developer {
-                            id = 'osiegmar'
-                            name = 'Oliver Siegmar'
-                            email = 'oliver@siegmar.de'
-                        }
+                    connection = 'scm:git:https://github.com/osiegmar/logback-awslogs-json-encoder.git'
+                }
+                developers {
+                    developer {
+                        id = 'osiegmar'
+                        name = 'Oliver Siegmar'
+                        email = 'oliver@siegmar.de'
                     }
                 }
-            }
-        }
-        repositories {
-            maven {
-                credentials {
-                    username "$ossrhUsername"
-                    password "$ossrhPassword"
-                }
-                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-                url version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             }
         }
     }
+    repositories {
+        maven {
+            name = 'ossrh'
+            credentials(PasswordCredentials)
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
 
-    signing {
-        sign publishing.publications.mavenJava
-    }
+signing {
+    sign publishing.publications.mavenJava
 }

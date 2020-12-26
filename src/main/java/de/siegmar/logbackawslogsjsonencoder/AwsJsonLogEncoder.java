@@ -256,7 +256,8 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
                 }
 
                 if (includeRootCauseData) {
-                    append(json, "root_exception_data", buildRootExceptionData(event.getThrowableProxy()));
+                    append(json, "root_exception_data",
+                        buildRootExceptionData(event.getThrowableProxy()));
                 }
 
                 if (!staticFields.isEmpty()) {
@@ -272,7 +273,8 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         return bos.toByteArray();
     }
 
-    private void append(final SimpleJsonEncoder json, final String key, final Map<String, Object> values) {
+    private void append(final SimpleJsonEncoder json, final String key,
+                        final Map<String, Object> values) {
         if (!values.isEmpty()) {
             json.appendToJSON(key, values);
         }

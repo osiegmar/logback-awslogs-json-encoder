@@ -1,7 +1,8 @@
 # Logback awslogs JSON encoder
 
-[![Build Status](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder.svg?branch=master)](https://travis-ci.org/osiegmar/logback-awslogs-json-encoder)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.siegmar/logback-awslogs-json-encoder/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.siegmar/logback-awslogs-json-encoder)
+[![build](https://github.com/osiegmar/logback-awslogs-json-encoder/workflows/build/badge.svg?branch=master)](https://github.com/osiegmar/logback-awslogs-json-encoder/actions?query=branch%3Amaster)
+[![javadoc](https://javadoc.io/badge2/de.siegmar/logback-awslogs-json-encoder/javadoc.svg)](https://javadoc.io/doc/de.siegmar/logback-awslogs-json-encoder)
+[![Maven Central](https://img.shields.io/maven-central/v/de.siegmar/logback-awslogs-json-encoder.svg)](https://search.maven.org/search?q=g:%22de.siegmar%22%20AND%20a:%22logback-awslogs-json-encoder%22)
 
 Logback encoder for producing JSON output that is handled by
 AWS [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html). This
