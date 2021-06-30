@@ -19,11 +19,13 @@
 
 package de.siegmar.logbackawslogsjsonencoder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
-import java.io.Writer;
+import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.core.encoder.EncoderBase;
+import org.slf4j.Marker;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -32,13 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import org.slf4j.Marker;
-
-import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.core.encoder.EncoderBase;
 
 /**
  * Logback encoder that produces JSON that is read by CloudWatch Logs Insights.
@@ -50,6 +45,7 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
     private static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ";
     private static final String DEFAULT_MESSAGE_PATTERN = "%m%nopex";
     private static final String DEFAULT_FULL_MESSAGE_PATTERN = "%m%n";
+    private static final String DEFAULT_MDC_PREFIX = "mdc";
 
     /**
      * Default timestamp format is in conjunction with {@code awslogs-datetime-format}
@@ -76,6 +72,8 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
      * If true, MDC keys/values will be included, too. Default: true.
      */
     private boolean includeMdcData = true;
+
+    private String mdcPrefix = DEFAULT_MDC_PREFIX;
 
     /**
      * If true, caller data (source file-, method-, class name and line) will be included, too.
@@ -126,6 +124,14 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
     public void setIncludeMarker(final boolean includeMarker) {
         this.includeMarker = includeMarker;
+    }
+
+    public String getMdcPrefix() {
+        return mdcPrefix;
+    }
+
+    public void setMdcPrefix(final String mdcPrefix) {
+        this.mdcPrefix = mdcPrefix;
     }
 
     public boolean isIncludeMdcData() {
@@ -248,7 +254,7 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
                 }
 
                 if (includeMdcData) {
-                    append(json, "mdc", buildMdcData(event.getMDCPropertyMap()));
+                    append(json, mdcPrefix, buildMdcData(event.getMDCPropertyMap()));
                 }
 
                 if (includeCallerData) {
@@ -276,7 +282,13 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
     private void append(final SimpleJsonEncoder json, final String key,
                         final Map<String, Object> values) {
         if (!values.isEmpty()) {
-            json.appendToJSON(key, values);
+            if (key != null && key.length() > 0) {
+                json.appendToJSON(key, values);
+            } else {
+                values.forEach((k, v) -> {
+                    json.appendToJSON(k, v);
+                });
+            }
         }
     }
 

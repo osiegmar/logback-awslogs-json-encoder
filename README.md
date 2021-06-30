@@ -71,6 +71,7 @@ Enhanced configuration:
             <includeRawMessage>false</includeRawMessage>
             <includeMarker>true</includeMarker>
             <includeMdcData>true</includeMdcData>
+            <mdcPrefix></mdcPrefix>
             <includeCallerData>false</includeCallerData>
             <includeRootCauseData>false</includeRootCauseData>
             <messageLayout class="ch.qos.logback.classic.PatternLayout">
@@ -101,6 +102,7 @@ Enhanced configuration:
   Default: false.
 * **includeMarker**: If true, logback markers will be included, too. Default: true.
 * **includeMdcData**: If true, MDC keys/values will be included, too. Default: true.
+* **mdcPrefix**: the key under which MDC values are stored. If empty or `null` MDC values will be written in the main object and can potentially overwrite other fields like level or message. Default: `"mdc"`.
 * **includeCallerData**: If true, caller data (source file-, method-, class name and line) will be
   included, too. Default: false.
 * **includeRootCauseData**: If true, root cause exception of the exception passed with the log
