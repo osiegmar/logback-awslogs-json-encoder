@@ -33,6 +33,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -173,6 +176,35 @@ public class AwsJsonLogEncoderTest {
         assertEquals("mdc_value", jsonNode.get("mdc").get("mdc_key").textValue());
         assertEquals("message {}", jsonNode.get("raw_message").textValue());
         assertNull(jsonNode.get("_exception"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mdc", ""})
+    @NullSource
+    public void mdcPrefix(String prefix) throws IOException {
+        encoder.setMdcPrefix(prefix);
+        encoder.start();
+
+        final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        final Logger logger = lc.getLogger(LOGGER_NAME);
+
+        final LoggingEvent event = simpleLoggingEvent(logger, null);
+
+        final Map<String, String> mdcMap = new HashMap<>();
+        mdcMap.put("mdc_key", "mdc_value");
+        mdcMap.put("mdc_key_nullvalue", null);
+        event.setMDCPropertyMap(mdcMap);
+
+        final String logMsg = produce(event);
+
+        final ObjectMapper om = new ObjectMapper();
+        final JsonNode jsonNode = om.readTree(logMsg);
+        basicValidation(jsonNode);
+        if (prefix == null || prefix.length() == 0) {
+            assertEquals("mdc_value", jsonNode.get("mdc_key").textValue());
+        } else {
+            assertEquals("mdc_value", jsonNode.get(prefix).get("mdc_key").textValue());
+        }
     }
 
     @Test
