@@ -181,7 +181,7 @@ public class AwsJsonLogEncoderTest {
     @ParameterizedTest
     @ValueSource(strings = {"mdc", ""})
     @NullSource
-    public void mdcPrefix(String prefix) throws IOException {
+    public void mdcPrefix(final String prefix) throws IOException {
         encoder.setMdcPrefix(prefix);
         encoder.start();
 
