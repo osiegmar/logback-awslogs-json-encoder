@@ -16,12 +16,10 @@ library has no external dependencies and thus very light footprint.
 - Forwarding of exception root cause
 - No runtime dependencies beside Logback
 
-
 ## Requirements
 
 - Java 8
-- Logback 1.2.3
-
+- Logback 1.2.10
 
 ## Prerequisites
 
