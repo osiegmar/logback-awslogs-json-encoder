@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.LineReader;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -69,8 +69,8 @@ public class AwsJsonLogEncoderTest {
         final JsonNode jsonNode = om.readTree(logMsg);
         basicValidation(jsonNode);
 
-        final LineReader msg =
-            new LineReader(new StringReader(jsonNode.get("message").textValue()));
+        final BufferedReader msg =
+            new BufferedReader(new StringReader(jsonNode.get("message").textValue()));
         assertEquals("message 1", msg.readLine());
     }
 
@@ -134,12 +134,13 @@ public class AwsJsonLogEncoderTest {
         final JsonNode jsonNode = om.readTree(logMsg);
         basicValidation(jsonNode);
 
-        final LineReader msg =
-            new LineReader(new StringReader(jsonNode.get("full_message").textValue()));
+        final BufferedReader msg =
+            new BufferedReader(new StringReader(jsonNode.get("full_message").textValue()));
 
         assertEquals("message 1", msg.readLine());
         assertEquals("java.lang.IllegalArgumentException: Example Exception", msg.readLine());
         final String line = msg.readLine();
+        assertNotNull(line);
         assertTrue(line.matches(
             "^\tat de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest.exception"
                 + "\\(AwsJsonLogEncoderTest.java:\\d+\\)$"), () -> "Unexpected line: " + line);
