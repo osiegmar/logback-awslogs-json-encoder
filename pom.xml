@@ -1,0 +1,14 @@
+<!-- This file is only used to use the Dependency graph feature of GitHub. It is not intended to build this project! -->
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>de.siegmar</groupId>
+    <artifactId>logback-awslogs-json-encoder</artifactId>
+    <version>1.1.1</version>
+    <dependencies>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.10</version>
+        </dependency>
+    </dependencies>
+</project>
