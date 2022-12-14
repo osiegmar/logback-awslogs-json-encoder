@@ -107,3 +107,4 @@ Enhanced configuration:
 * **messageLayout**: Message format for messages without an exception. Default: `"%m%nopex"`.
 * **fullMessageLayout**: Message format for messages with an exception. Default: `"%m%n"`.
 * **staticFields**: Additional, static fields to include. Defaults: none.
+* **includeStaticFieldsAsJsonNode**: If false, static fields will be included at root level JSON. Default: true.

@@ -177,6 +177,27 @@ public class AwsJsonLogEncoderTest {
     }
 
     @Test
+    public void flattenStaticFields() throws IOException {
+        encoder.setIncludeRawMessage(true);
+        encoder.addStaticField("foo:bar");
+        encoder.setIncludeStaticFieldsAsJsonNode(false);
+        encoder.start();
+
+        final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        final Logger logger = lc.getLogger(LOGGER_NAME);
+
+        final LoggingEvent event = simpleLoggingEvent(logger, null);
+
+        final String logMsg = produce(event);
+
+        final ObjectMapper om = new ObjectMapper();
+        final JsonNode jsonNode = om.readTree(logMsg);
+        basicValidation(jsonNode);
+        assertEquals("DEBUG", jsonNode.get("level").textValue());
+        assertEquals("bar", jsonNode.get("foo").textValue());
+    }
+
+    @Test
     public void rootExceptionTurnedOff() throws IOException {
         encoder.start();
 

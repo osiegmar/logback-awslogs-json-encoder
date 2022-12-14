@@ -104,6 +104,13 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
      */
     private Map<String, Object> staticFields = new HashMap<>();
 
+    /**
+     * if false, static fields are added at the root level of JSON.
+     * if true, static fields are added under the property name `static_fields`.
+     * Default: true
+     */
+    private boolean includeStaticFieldsAsJsonNode = true;
+
     public String getDateTimeFormat() {
         return dateTimeFormat;
     }
@@ -170,6 +177,14 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
     public Map<String, Object> getStaticFields() {
         return staticFields;
+    }
+
+    public boolean isIncludeStaticFieldsAsJsonNode() {
+        return includeStaticFieldsAsJsonNode;
+    }
+
+    public void setIncludeStaticFieldsAsJsonNode(final boolean includeStaticFieldsAsJsonNode) {
+        this.includeStaticFieldsAsJsonNode = includeStaticFieldsAsJsonNode;
     }
 
     public void setStaticFields(final Map<String, Object> staticFields) {
@@ -260,9 +275,8 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
                         buildRootExceptionData(event.getThrowableProxy()));
                 }
 
-                if (!staticFields.isEmpty()) {
-                    json.appendToJSON("static_fields", staticFields);
-                }
+                appendStaticFields(json);
+
             }
 
             appendable.append(System.lineSeparator());
@@ -271,6 +285,14 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         }
 
         return bos.toByteArray();
+    }
+
+    private void appendStaticFields(final SimpleJsonEncoder json) {
+        if (includeStaticFieldsAsJsonNode) {
+            append(json, "static_fields", staticFields);
+        } else {
+            staticFields.forEach(json::appendToJSON);
+        }
     }
 
     private void append(final SimpleJsonEncoder json, final String key,
