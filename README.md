@@ -1,5 +1,8 @@
 # Logback awslogs JSON encoder
 
+> :point_up: Logback contains a [JsonEncoder](https://logback.qos.ch/manual/encoders.html#JsonEncoder) since 1.3.8.
+> Therefore I do no longer consider this library as relevant.
+
 [![build](https://github.com/osiegmar/logback-awslogs-json-encoder/actions/workflows/build.yml/badge.svg)](https://github.com/osiegmar/logback-awslogs-json-encoder/actions/workflows/build.yml)
 [![javadoc](https://javadoc.io/badge2/de.siegmar/logback-awslogs-json-encoder/javadoc.svg)](https://javadoc.io/doc/de.siegmar/logback-awslogs-json-encoder)
 [![Maven Central](https://img.shields.io/maven-central/v/de.siegmar/logback-awslogs-json-encoder.svg)](https://search.maven.org/artifact/de.siegmar/logback-awslogs-json-encoder)
