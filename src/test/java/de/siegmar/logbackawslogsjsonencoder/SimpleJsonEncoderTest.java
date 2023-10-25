@@ -19,95 +19,93 @@
 
 package de.siegmar.logbackawslogsjsonencoder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.StringWriter;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-public class SimpleJsonEncoderTest {
+class SimpleJsonEncoderTest {
 
-    private final StringWriter sw = new StringWriter();
-    private final SimpleJsonEncoder enc = new SimpleJsonEncoder(sw);
+    private final StringBuilder sb = new StringBuilder();
+    private final SimpleJsonEncoder enc = new SimpleJsonEncoder(sb);
 
     @Test
-    public void string() {
+    void string() {
         enc.appendToJSON("aaa", "bbb");
-        assertEquals("{\"aaa\":\"bbb\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"bbb\"}");
     }
 
     private String produce() {
-        enc.close();
-        return sw.toString();
+        enc.end();
+        return sb.toString();
     }
 
     @Test
-    public void number() {
+    void number() {
         enc.appendToJSON("aaa", 123);
-        assertEquals("{\"aaa\":123}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":123}");
     }
 
     @Test
-    public void quote() {
+    void quote() {
         enc.appendToJSON("aaa", "\"");
-        assertEquals("{\"aaa\":\"\\\"\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\\"\"}");
     }
 
     @Test
-    public void reverseSolidus() {
+    void reverseSolidus() {
         enc.appendToJSON("aaa", "\\");
-        assertEquals("{\"aaa\":\"\\\\\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\\\\"}");
     }
 
     @Test
-    public void solidus() {
+    void solidus() {
         enc.appendToJSON("aaa", "/");
-        assertEquals("{\"aaa\":\"\\/\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\/\"}");
     }
 
     @Test
-    public void backspace() {
+    void backspace() {
         enc.appendToJSON("aaa", "\b");
-        assertEquals("{\"aaa\":\"\\b\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\b\"}");
     }
 
     @Test
-    public void formFeed() {
+    void formFeed() {
         enc.appendToJSON("aaa", "\f");
-        assertEquals("{\"aaa\":\"\\f\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\f\"}");
     }
 
     @Test
-    public void newline() {
+    void newline() {
         enc.appendToJSON("aaa", "\n");
-        assertEquals("{\"aaa\":\"\\n\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\n\"}");
     }
 
     @Test
-    public void carriageReturn() {
+    void carriageReturn() {
         enc.appendToJSON("aaa", "\r");
-        assertEquals("{\"aaa\":\"\\r\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\r\"}");
     }
 
     @Test
-    public void tab() {
+    void tab() {
         enc.appendToJSON("aaa", "\t");
-        assertEquals("{\"aaa\":\"\\t\"}", produce());
+        assertThat(produce()).isEqualTo("{\"aaa\":\"\\t\"}");
     }
 
     @Test
     @SuppressWarnings("checkstyle:avoidescapedunicodecharacters")
-    public void unicode() {
+    void unicode() {
         enc.appendToJSON("\u0002", "\u0007\u0019");
-        assertEquals("{\"\\u0002\":\"\\u0007\\u0019\"}", produce());
+        assertThat(produce()).isEqualTo("{\"\\u0002\":\"\\u0007\\u0019\"}");
     }
 
     @Test
-    public void multipleFields() {
+    void multipleFields() {
         enc.appendToJSON("bbb", "ccc");
         enc.appendToJSON("ddd", 123);
 
-        assertEquals("{\"bbb\":\"ccc\",\"ddd\":123}", produce());
+        assertThat(produce()).isEqualTo("{\"bbb\":\"ccc\",\"ddd\":123}");
     }
 
 }

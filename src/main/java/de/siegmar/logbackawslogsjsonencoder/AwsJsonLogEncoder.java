@@ -19,11 +19,6 @@
 
 package de.siegmar.logbackawslogsjsonencoder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -220,57 +215,53 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
     @Override
     public byte[] encode(final ILoggingEvent event) {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream(INITIAL_BUF_SIZE);
+        final StringBuilder sb = new StringBuilder(INITIAL_BUF_SIZE);
+        final SimpleJsonEncoder json = new SimpleJsonEncoder(sb);
 
-        try (Writer appendable = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
-            try (SimpleJsonEncoder json = new SimpleJsonEncoder(appendable)) {
-                final Instant timestamp = Instant.ofEpochMilli(event.getTimeStamp());
+        final Instant timestamp = Instant.ofEpochMilli(event.getTimeStamp());
 
-                json.appendToJSON("timestamp", dateTimeFormatter.format(timestamp))
-                    .appendToJSON("level", event.getLevel().toString())
-                    .appendToJSON("logger", event.getLoggerName())
-                    .appendToJSON("thread", event.getThreadName())
-                    .appendToJSON("message", messageLayout.doLayout(event));
+        json.appendToJSON("timestamp", dateTimeFormatter.format(timestamp))
+            .appendToJSON("level", event.getLevel().toString())
+            .appendToJSON("logger", event.getLoggerName())
+            .appendToJSON("thread", event.getThreadName())
+            .appendToJSON("message", messageLayout.doLayout(event));
 
-                if (event.getThrowableProxy() != null) {
-                    json.appendToJSON("full_message", fullMessageLayout.doLayout(event));
-                }
-
-                if (includeRawMessage) {
-                    json.appendToJSON("raw_message", event.getMessage());
-                }
-
-                if (includeMarker) {
-                    final Marker marker = event.getMarker();
-                    if (marker != null) {
-                        json.appendToJSON("marker", marker.getName());
-                    }
-                }
-
-                if (includeMdcData) {
-                    append(json, "mdc", buildMdcData(event.getMDCPropertyMap()));
-                }
-
-                if (includeCallerData) {
-                    append(json, "caller_data", buildCallerData(event.getCallerData()));
-                }
-
-                if (includeRootCauseData) {
-                    append(json, "root_exception_data",
-                        buildRootExceptionData(event.getThrowableProxy()));
-                }
-
-                if (!staticFields.isEmpty()) {
-                    json.appendToJSON("static_fields", staticFields);
-                }
-            }
-
-            appendable.append(System.lineSeparator());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (event.getThrowableProxy() != null) {
+            json.appendToJSON("full_message", fullMessageLayout.doLayout(event));
         }
 
-        return bos.toByteArray();
+        if (includeRawMessage) {
+            json.appendToJSON("raw_message", event.getMessage());
+        }
+
+        if (includeMarker) {
+            final Marker marker = event.getMarker();
+            if (marker != null) {
+                json.appendToJSON("marker", marker.getName());
+            }
+        }
+
+        if (includeMdcData) {
+            append(json, "mdc", buildMdcData(event.getMDCPropertyMap()));
+        }
+
+        if (includeCallerData) {
+            append(json, "caller_data", buildCallerData(event.getCallerData()));
+        }
+
+        if (includeRootCauseData) {
+            append(json, "root_exception_data",
+                buildRootExceptionData(event.getThrowableProxy()));
+        }
+
+        if (!staticFields.isEmpty()) {
+            json.appendToJSON("static_fields", staticFields);
+        }
+
+        json.end();
+        sb.append(System.lineSeparator());
+
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     private void append(final SimpleJsonEncoder json, final String key,

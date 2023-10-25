@@ -19,25 +19,16 @@
 
 package de.siegmar.logbackawslogsjsonencoder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -45,33 +36,25 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 
-public class AwsJsonLogEncoderTest {
+class AwsJsonLogEncoderTest {
 
     private static final String LOGGER_NAME = AwsJsonLogEncoderTest.class.getCanonicalName();
 
-    private AwsJsonLogEncoder encoder = new AwsJsonLogEncoder();
+    private final AwsJsonLogEncoder encoder = new AwsJsonLogEncoder();
 
-    @BeforeEach
-    public void before() {
+    AwsJsonLogEncoderTest() {
         encoder.setContext(new LoggerContext());
     }
 
     @Test
-    public void simple() throws IOException {
+    void simple() {
         encoder.start();
 
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         final Logger logger = lc.getLogger(LOGGER_NAME);
 
         final String logMsg = produce(simpleLoggingEvent(logger, null));
-
-        final ObjectMapper om = new ObjectMapper();
-        final JsonNode jsonNode = om.readTree(logMsg);
-        basicValidation(jsonNode);
-
-        final BufferedReader msg =
-            new BufferedReader(new StringReader(jsonNode.get("message").textValue()));
-        assertEquals("message 1", msg.readLine());
+        basicValidation(logMsg);
     }
 
     private String produce(final ILoggingEvent event) {
@@ -79,7 +62,7 @@ public class AwsJsonLogEncoderTest {
     }
 
     @Test
-    public void nestedExceptionShouldNotFail() {
+    void nestedExceptionShouldNotFail() {
         encoder.setIncludeRootCauseData(true);
         encoder.start();
 
@@ -102,16 +85,18 @@ public class AwsJsonLogEncoderTest {
             new Object[]{1});
     }
 
-    private void basicValidation(final JsonNode jsonNode) {
-        assertNotNull(jsonNode.get("timestamp").textValue());
-        assertEquals("DEBUG", jsonNode.get("level").textValue());
-        assertEquals(LOGGER_NAME, jsonNode.get("logger").textValue());
-        assertNotNull(jsonNode.get("thread").textValue());
-        assertEquals("message 1", jsonNode.get("message").textValue());
+    private void basicValidation(final String jsonNode) {
+        assertThatJson(jsonNode).and(
+            j -> j.node("timestamp").isNotNull(),
+            j -> j.node("level").isEqualTo("DEBUG"),
+            j -> j.node("logger").isEqualTo(LOGGER_NAME),
+            j -> j.node("thread").isNotNull(),
+            j -> j.node("message").isEqualTo("message 1")
+        );
     }
 
     @Test
-    public void exception() throws IOException {
+    void exception() {
         encoder.start();
 
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -130,24 +115,19 @@ public class AwsJsonLogEncoderTest {
                 new Object[]{1}));
         }
 
-        final ObjectMapper om = new ObjectMapper();
-        final JsonNode jsonNode = om.readTree(logMsg);
-        basicValidation(jsonNode);
+        basicValidation(logMsg);
 
-        final BufferedReader msg =
-            new BufferedReader(new StringReader(jsonNode.get("full_message").textValue()));
-
-        assertEquals("message 1", msg.readLine());
-        assertEquals("java.lang.IllegalArgumentException: Example Exception", msg.readLine());
-        final String line = msg.readLine();
-        assertNotNull(line);
-        assertTrue(line.matches(
-            "^\tat de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest.exception"
-                + "\\(AwsJsonLogEncoderTest.java:\\d+\\)$"), () -> "Unexpected line: " + line);
+        assertThatJson(logMsg).and(
+            j -> j.node("full_message").isString().startsWith(
+                "message 1\n"
+                + "java.lang.IllegalArgumentException: Example Exception\n"
+                + "\tat de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest"
+                + ".exception(AwsJsonLogEncoderTest.java:")
+        );
     }
 
     @Test
-    public void complex() throws IOException {
+    void complex() {
         encoder.setIncludeRawMessage(true);
         encoder.addStaticField("foo:bar");
         encoder.setIncludeCallerData(true);
@@ -166,18 +146,19 @@ public class AwsJsonLogEncoderTest {
 
         final String logMsg = produce(event);
 
-        final ObjectMapper om = new ObjectMapper();
-        final JsonNode jsonNode = om.readTree(logMsg);
-        basicValidation(jsonNode);
-        assertEquals("DEBUG", jsonNode.get("level").textValue());
-        assertEquals("bar", jsonNode.get("static_fields").get("foo").textValue());
-        assertEquals("mdc_value", jsonNode.get("mdc").get("mdc_key").textValue());
-        assertEquals("message {}", jsonNode.get("raw_message").textValue());
-        assertNull(jsonNode.get("_exception"));
+        basicValidation(logMsg);
+
+        assertThatJson(logMsg).and(
+            j -> j.node("level").isEqualTo("DEBUG"),
+            j -> j.node("static_fields.foo").isEqualTo("bar"),
+            j -> j.node("mdc.mdc_key").isEqualTo("mdc_value"),
+            j -> j.node("raw_message").isEqualTo("message {}"),
+            j -> j.node("_exception").isAbsent()
+        );
     }
 
     @Test
-    public void rootExceptionTurnedOff() throws IOException {
+    void rootExceptionTurnedOff() {
         encoder.start();
 
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -190,14 +171,11 @@ public class AwsJsonLogEncoderTest {
             logMsg = produce(simpleLoggingEvent(logger, e));
         }
 
-        final ObjectMapper om = new ObjectMapper();
-        final JsonNode jsonNode = om.readTree(logMsg);
-
-        assertFalse(jsonNode.has("exception"));
+        assertThatJson(logMsg).node("exception").isAbsent();
     }
 
     @Test
-    public void noRootException() throws IOException {
+    void noRootException() {
         encoder.setIncludeRootCauseData(true);
         encoder.start();
 
@@ -206,14 +184,11 @@ public class AwsJsonLogEncoderTest {
 
         final String logMsg = produce(simpleLoggingEvent(logger, null));
 
-        final ObjectMapper om = new ObjectMapper();
-        final JsonNode jsonNode = om.readTree(logMsg);
-
-        assertFalse(jsonNode.has("exception"));
+        assertThatJson(logMsg).node("exception").isAbsent();
     }
 
     @Test
-    public void rootExceptionWithoutCause() throws IOException {
+    void rootExceptionWithoutCause() {
         encoder.setIncludeRootCauseData(true);
         encoder.start();
 
@@ -227,17 +202,16 @@ public class AwsJsonLogEncoderTest {
             logMsg = produce(simpleLoggingEvent(logger, e));
         }
 
-        final ObjectMapper om = new ObjectMapper();
+        basicValidation(logMsg);
 
-        final JsonNode jsonNode = om.readTree(logMsg);
-
-        final JsonNode exceptionData = jsonNode.get("root_exception_data");
-        assertEquals("java.io.IOException", exceptionData.get("root_cause_class_name").textValue());
-        assertEquals("Example Exception", exceptionData.get("root_cause_message").textValue());
+        assertThatJson(logMsg).node("root_exception_data").and(
+            j -> j.node("root_cause_class_name").isEqualTo("java.io.IOException"),
+            j -> j.node("root_cause_message").isEqualTo("Example Exception")
+        );
     }
 
     @Test
-    public void rootExceptionWithCause() throws IOException {
+    void rootExceptionWithCause() {
         encoder.setIncludeRootCauseData(true);
         encoder.start();
 
@@ -252,17 +226,12 @@ public class AwsJsonLogEncoderTest {
             logMsg = produce(simpleLoggingEvent(logger, e));
         }
 
-        final ObjectMapper om = new ObjectMapper();
-        final JsonNode jsonNode = om.readTree(logMsg);
-        basicValidation(jsonNode);
+        basicValidation(logMsg);
 
-        final JsonNode exceptionData = jsonNode.get("root_exception_data");
-
-        assertEquals("java.lang.IllegalStateException",
-            exceptionData.get("root_cause_class_name").textValue());
-
-        assertEquals("Example Exception 2",
-            exceptionData.get("root_cause_message").textValue());
+        assertThatJson(logMsg).node("root_exception_data").and(
+            j -> j.node("root_cause_class_name").isEqualTo("java.lang.IllegalStateException"),
+            j -> j.node("root_cause_message").isEqualTo("Example Exception 2")
+        );
     }
 
 }

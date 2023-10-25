@@ -19,16 +19,13 @@
 
 package de.siegmar.logbackawslogsjsonencoder;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Simple JSON encoder with very basic functionality that is required by this library.
  */
-class SimpleJsonEncoder implements Closeable {
+class SimpleJsonEncoder {
 
     private static final char OPEN_BRACE = '{';
     private static final char CLOSE_BRACE = '}';
@@ -37,7 +34,7 @@ class SimpleJsonEncoder implements Closeable {
     /**
      * Underlying writer.
      */
-    private final Appendable appendable;
+    private final StringBuilder appendable;
 
     /**
      * Flag to determine if a comma has to be added on next append execution.
@@ -49,28 +46,18 @@ class SimpleJsonEncoder implements Closeable {
      */
     private boolean closed;
 
-    SimpleJsonEncoder(final Appendable appendable) {
+    SimpleJsonEncoder(final StringBuilder appendable) {
         this.appendable = appendable;
         append(OPEN_BRACE);
     }
 
     private SimpleJsonEncoder append(final char c) {
-        try {
-            appendable.append(c);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
+        appendable.append(c);
         return this;
     }
 
     private SimpleJsonEncoder append(final Object str) {
-        try {
-            appendable.append(str.toString());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
+        appendable.append(str.toString());
         return this;
     }
 
@@ -209,8 +196,7 @@ class SimpleJsonEncoder implements Closeable {
         return "\\u" + prefix + Integer.toHexString(ch);
     }
 
-    @Override
-    public void close() {
+    public void end() {
         if (closed) {
             return;
         }
