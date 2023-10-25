@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
     signing
     checkstyle
-    id("com.github.spotbugs") version "4.5.0"
+    id("com.github.spotbugs") version "5.1.4"
 }
 
 group = "de.siegmar"
@@ -11,7 +11,7 @@ version = "2.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(11)
     }
     withJavadocJar()
     withSourcesJar()
@@ -22,10 +22,10 @@ repositories {
 }
 
 dependencies {
-    api("ch.qos.logback:logback-classic:1.2.10")
-    testImplementation(platform("org.junit:junit-bom:5.7.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
+    api("ch.qos.logback:logback-classic:1.4.11")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 }
 
 tasks.test {
@@ -33,6 +33,7 @@ tasks.test {
 }
 
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
+    excludeFilter = file("${project.rootDir}/config/spotbugs/config.xml")
     reports.maybeCreate("xml").required = false
     reports.maybeCreate("html").required = true
 }
