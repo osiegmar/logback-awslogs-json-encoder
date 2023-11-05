@@ -1,6 +1,6 @@
 /*
  * Logback awslogs JSON encoder.
- * Copyright (C) 2018 Oliver Siegmar
+ * Copyright (C) 2023 Oliver Siegmar
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
