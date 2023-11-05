@@ -20,7 +20,7 @@ Unfortunately that JsonEncoder produces log output that is poorly suited for use
 
 ## Requirements
 
-- Java 17
+- Java 11
 - Logback 1.4.11
 
 ## Prerequisites

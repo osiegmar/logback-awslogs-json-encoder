@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2023-??-??
 ### Changed
 - Complete rewrite
-- Update to Java 17
+- Update to Java 11
 - Update Logback dependency to 1.4.11
 
 ## [1.1.1] - 2022-01-04

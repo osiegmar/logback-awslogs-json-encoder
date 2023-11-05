@@ -52,28 +52,28 @@ class AwsJsonLogEncoderTest {
     void defaultConfig() {
         encoder.start();
 
-        assertThatJson(fullLog()).isEqualTo(json("""
-            {
-                "timestamp": "${json-unit.any-number}",
-                "level": "DEBUG",
-                "thread": "Test worker",
-                "logger": "de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest",
-                "message": "message 1",
-                "markers": {
-                    "foo": 1,
-                    "bar": 1
-                },
-                "mdc": {
-                    "foo": "bar",
-                    "baz": null
-                },
-                "keyValues": {
-                    "foo": "bar",
-                    "bar": null,
-                    "null": "bar"
-                }
-            }
-            """));
+        //language=JSON5
+        final String expectedJson =
+            "{"
+            + "timestamp: '${json-unit.any-number}',"
+            + "level: 'DEBUG',"
+            + "thread: 'Test worker',"
+            + "logger: 'de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest',"
+            + "message: 'message 1',"
+            + "markers: {"
+            + "    'foo': 1,"
+            + "    'bar': 1"
+            + "},"
+            + "mdc: {"
+            + "    foo: 'bar',"
+            + "    baz: null"
+            + "},"
+            + "keyValues: {"
+            + "    foo: 'bar',"
+            + "    bar: null,"
+            + "    'null': 'bar'"
+            + "}}";
+        assertThatJson(fullLog()).isEqualTo(json(expectedJson));
     }
 
     @Test
@@ -151,9 +151,9 @@ class AwsJsonLogEncoderTest {
         }
 
         assertThatJson(logMsg).and(
-            j -> j.node("stacktrace").isString().startsWith("""
-                java.lang.IllegalArgumentException: Example Exception
-                \tat de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest.stacktrace(AwsJsonLogEncoderTest""")
+            j -> j.node("stacktrace").isString().startsWith(
+                "java.lang.IllegalArgumentException: Example Exception\n"
+                + "\tat de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest.stacktrace(AwsJsonLogEncoderTest")
         );
     }
 
@@ -169,14 +169,14 @@ class AwsJsonLogEncoderTest {
             logMsg = fullLog(e);
         }
 
-        assertThatJson(logMsg).isEqualTo(json("""
-            {
-                "rootCause": {
-                    "class": "java.lang.IllegalArgumentException",
-                    "message": "Example Exception"
-                }
-            }
-            """));
+        //language=JSON5
+        final String expectedJson =
+            "{rootCause: {"
+            + "class: 'java.lang.IllegalArgumentException',"
+            + "message: 'Example Exception'"
+            + "}}";
+
+        assertThatJson(logMsg).isEqualTo(json(expectedJson));
     }
 
     @Test
@@ -203,17 +203,16 @@ class AwsJsonLogEncoderTest {
     @Test
     void caller() {
         setupAllDisabledEncoder(c -> c.setIncludeCaller(true));
+        //language=JSON5
+        final String expectedJson =
+            "{caller: {"
+            + "    file: 'NativeMethodAccessorImpl.java',"
+            + "    line: -2,"
+            + "    class: 'jdk.internal.reflect.NativeMethodAccessorImpl',"
+            + "    method: 'invoke0'"
+            + "}}";
         assertThatJson(fullLog())
-            .isEqualTo(json("""
-                {
-                    "caller": {
-                        "file": "NativeMethodAccessorImpl.java",
-                        "line": -2,
-                        "class": "jdk.internal.reflect.NativeMethodAccessorImpl",
-                        "method": "invoke0"
-                    }
-                }
-                """));
+            .isEqualTo(json(expectedJson));
     }
 
     @Test
@@ -233,40 +232,43 @@ class AwsJsonLogEncoderTest {
     @Test
     void complex() {
         setupAllEnabledEncoder(c -> c.addStaticField("foo:bar"));
-        assertThatJson(fullLog()).isEqualTo(json("""
-            {
-                "sequenceNumber": 0,
-                "timestamp": "${json-unit.any-number}",
-                "nanoseconds": "${json-unit.any-number}",
-                "level": "DEBUG",
-                "thread": "Test worker",
-                "logger": "de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest",
-                "message": "message 1",
-                "rawMessage": "message {}",
-                "staticFields": {
-                    "foo": "bar"
-                },
-                "markers": {
-                    "foo": 1,
-                    "bar": 1
-                },
-                "mdc": {
-                    "foo": "bar",
-                    "baz": null
-                },
-                "keyValues": {
-                    "foo": "bar",
-                    "bar": null,
-                    "null": "bar"
-                },
-                "caller": {
-                    "file": "NativeMethodAccessorImpl.java",
-                    "line": -2,
-                    "class": "jdk.internal.reflect.NativeMethodAccessorImpl",
-                    "method": "invoke0"
-                }
-            }
-            """));
+
+        //language=JSON5
+        final String expectedJson =
+            "{"
+            + "    sequenceNumber: 0,"
+            + "    timestamp: '${json-unit.any-number}',"
+            + "    nanoseconds: '${json-unit.any-number}',"
+            + "    level: 'DEBUG',"
+            + "    thread: 'Test worker',"
+            + "    logger: 'de.siegmar.logbackawslogsjsonencoder.AwsJsonLogEncoderTest',"
+            + "    message: 'message 1',"
+            + "    rawMessage: 'message {}',"
+            + "    staticFields: {"
+            + "        foo: 'bar'"
+            + "    },"
+            + "    markers: {"
+            + "        foo: 1,"
+            + "        bar: 1"
+            + "    },"
+            + "    mdc: {"
+            + "        foo: 'bar',"
+            + "        baz: null"
+            + "    },"
+            + "    keyValues: {"
+            + "        foo: 'bar',"
+            + "        bar: null,"
+            + "        'null': 'bar'"
+            + "    },"
+            + "    caller: {"
+            + "        file: 'NativeMethodAccessorImpl.java',"
+            + "        line: -2,"
+            + "        class: 'jdk.internal.reflect.NativeMethodAccessorImpl',"
+            + "        method: 'invoke0'"
+            + "    }"
+            + "}";
+
+        assertThatJson(fullLog()).isEqualTo(json(expectedJson));
     }
 
     private void setupAllDisabledEncoder(final Consumer<AwsJsonLogEncoder> customize) {

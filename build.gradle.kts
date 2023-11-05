@@ -11,7 +11,7 @@ version = "2.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(11)
     }
     withSourcesJar()
 }
@@ -25,7 +25,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.11.1")
-    testImplementation("net.javacrumbs.json-unit:json-unit-assertj:3.2.2")
+    testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.38.0")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 }
 
