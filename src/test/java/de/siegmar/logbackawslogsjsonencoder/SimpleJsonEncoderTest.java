@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings({"PMD.AvoidStringBufferField", "PMD.AvoidDuplicateLiterals"})
 class SimpleJsonEncoderTest {
 
     private final StringBuilder sb = new StringBuilder();

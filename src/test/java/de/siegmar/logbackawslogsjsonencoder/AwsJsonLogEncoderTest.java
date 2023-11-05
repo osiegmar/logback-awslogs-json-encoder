@@ -38,6 +38,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
 
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 class AwsJsonLogEncoderTest {
 
     private static final String LOGGER_NAME = AwsJsonLogEncoderTest.class.getCanonicalName();

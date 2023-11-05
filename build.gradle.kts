@@ -2,6 +2,7 @@ plugins {
     `java-library`
     `maven-publish`
     signing
+    pmd
     checkstyle
     id("com.github.spotbugs") version "5.1.4"
 }
@@ -33,6 +34,12 @@ tasks.test {
     useJUnitPlatform()
 }
 
+pmd {
+    isConsoleOutput = true
+    ruleSets = emptyList()
+    ruleSetFiles = files("${project.rootDir}/config/pmd/config.xml")
+}
+
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
     excludeFilter = file("${project.rootDir}/config/spotbugs/config.xml")
     reports.maybeCreate("xml").required = false
@@ -52,7 +59,7 @@ publishing {
                 licenses {
                     license {
                         name = "GNU Lesser General Public License version 2.1"
-                        url = "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt"
+                        url = "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt"
                     }
                 }
                 scm {

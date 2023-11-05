@@ -65,6 +65,7 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         return staticFields;
     }
 
+    @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
     public void addStaticField(final String staticField) {
         final String[] split = staticField.split(":", 2);
         if (split.length == 2) {
@@ -298,6 +299,7 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
             keyValuePairs.forEach(kvp -> j.append(kvp.key, kvp.value)));
     }
 
+    @SuppressWarnings("PMD.UseVarargs")
     private static void appendCaller(final SimpleJsonEncoder json, final StackTraceElement[] stackTraceElements) {
         if (stackTraceElements == null || stackTraceElements.length == 0) {
             return;
@@ -344,11 +346,13 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
             staticFields.forEach(j::append));
     }
 
+    @SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
     @Override
     public byte[] headerBytes() {
         return null;
     }
 
+    @SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
     @Override
     public byte[] footerBytes() {
         return null;

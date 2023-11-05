@@ -37,6 +37,7 @@ public class SimpleJsonEncoder {
     /**
      * Underlying writer.
      */
+    @SuppressWarnings("PMD.AvoidStringBufferField")
     private final StringBuilder sb;
 
     /**
@@ -118,7 +119,7 @@ public class SimpleJsonEncoder {
      * @param str string to be escaped.
      * @return escaped string.
      */
-    @SuppressWarnings("checkstyle:cyclomaticcomplexity")
+    @SuppressWarnings({"checkstyle:cyclomaticcomplexity", "PMD.ImplicitSwitchFallThrough"})
     private static StringBuilder escapeString(final String str) {
         final StringBuilder sb = new StringBuilder(str.length());
 
@@ -160,7 +161,7 @@ public class SimpleJsonEncoder {
      * @param ch character to be escaped.
      * @return escaped representation of character.
      */
-    @SuppressWarnings("checkstyle:magicnumber")
+    @SuppressWarnings({"checkstyle:magicnumber", "PMD.AvoidLiteralsInIfCondition"})
     private static String escapeCharacter(final char ch) {
         final String prefix;
 
