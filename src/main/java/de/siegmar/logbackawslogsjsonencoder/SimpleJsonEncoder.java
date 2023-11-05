@@ -19,117 +19,97 @@
 
 package de.siegmar.logbackawslogsjsonencoder;
 
-import java.util.Iterator;
-import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Simple JSON encoder with very basic functionality that is required by this library.
  */
-class SimpleJsonEncoder {
+public class SimpleJsonEncoder {
 
+    private static final int JSON_MAX_DEPTH = 8;
     private static final char OPEN_BRACE = '{';
     private static final char CLOSE_BRACE = '}';
     private static final char QUOTE = '"';
+    private static final char COLON = ':';
+    private static final char COMMA = ',';
+    private static final String NULL = "null";
 
     /**
      * Underlying writer.
      */
-    private final StringBuilder appendable;
+    private final StringBuilder sb;
 
     /**
      * Flag to determine if a comma has to be added on next append execution.
      */
-    private boolean started;
+    private final boolean[] prependComma = new boolean[JSON_MAX_DEPTH];
+    private int currentDepth;
 
-    /**
-     * Flag set when JSON object is closed by curly brace.
-     */
-    private boolean closed;
-
-    SimpleJsonEncoder(final StringBuilder appendable) {
-        this.appendable = appendable;
-        append(OPEN_BRACE);
-    }
-
-    private SimpleJsonEncoder append(final char c) {
-        appendable.append(c);
-        return this;
-    }
-
-    private SimpleJsonEncoder append(final Object str) {
-        appendable.append(str.toString());
-        return this;
+    SimpleJsonEncoder(final StringBuilder sb) {
+        this.sb = sb;
+        sb.append(OPEN_BRACE);
     }
 
     /**
-     * Append field with quotes and escape characters added, if required.
+     * Append field to this JSON object.
+     *
+     * @param key the key of the JSON element to add
+     * @param value the value of the JSON element to add
      *
      * @return this
      */
-    SimpleJsonEncoder appendToJSON(final String key, final Object value) {
-        ensureOpen();
-        if (value != null) {
-            appendKey(key);
-            appendValue(value);
-        }
-        return this;
+    public SimpleJsonEncoder append(final String key, final Object value) {
+        return appendKey(key).appendValue(value);
     }
 
     /**
-     * Append fields with quotes and escape characters added, if required.
+     * Append object to this JSON object.
      *
-     * @return this
+     * @param key the key of the JSON element to add
+     * @param consumer a consumer to this {@code SimpleJsonEncoder} to add JSON body
+     *
+     * @return A reference to this {@code SimpleJsonEncoder}
      */
-    SimpleJsonEncoder appendToJSON(final String key, final Map<String, Object> values) {
-        ensureOpen();
-        if (values == null) {
-            return this;
-        }
-
+    public SimpleJsonEncoder appendObject(final String key, final Consumer<SimpleJsonEncoder> consumer) {
         appendKey(key);
+        sb.append(OPEN_BRACE);
+        currentDepth++;
 
-        append(OPEN_BRACE);
+        consumer.accept(this);
 
-        for (Iterator<Map.Entry<String, Object>> it = values.entrySet().iterator(); it.hasNext();) {
-            final Map.Entry<String, Object> entry = it.next();
-            if (entry.getValue() != null) {
-                appendKey(entry.getKey(), false);
-                appendValue(entry.getValue());
-                if (it.hasNext()) {
-                    append(',');
-                }
-            }
-        }
-
-        append(CLOSE_BRACE);
+        end();
 
         return this;
     }
 
-    private void appendValue(final Object value) {
-        if (value instanceof Number) {
-            append(value.toString());
+    private SimpleJsonEncoder appendKey(final String key) {
+        if (prependComma[currentDepth]) {
+            sb.append(COMMA);
         } else {
-            append(QUOTE).append(escapeString(value.toString())).append(QUOTE);
+            prependComma[currentDepth] = true;
         }
+
+        final CharSequence keyVal = key == null ? NULL : escapeString(key);
+        sb.append(QUOTE).append(keyVal).append(QUOTE).append(COLON);
+
+        return this;
     }
 
-    private void ensureOpen() {
-        if (closed) {
-            throw new IllegalStateException("Encoder already closed");
+    private SimpleJsonEncoder appendValue(final Object value) {
+        if (value == null) {
+            sb.append(NULL);
+        } else if (value instanceof Number) {
+            sb.append(value);
+        } else {
+            sb.append(QUOTE).append(escapeString(value.toString())).append(QUOTE);
         }
+
+        return this;
     }
 
-    private void appendKey(final String key) {
-        appendKey(key, started);
-        started = true;
-    }
-
-    private void appendKey(final String key, final boolean prependComma) {
-        if (prependComma) {
-            append(',');
-        }
-        append(QUOTE).append(escapeString(key)).append(QUOTE).append(':');
+    void end() {
+        sb.append(CLOSE_BRACE);
+        prependComma[currentDepth--] = false;
     }
 
     /**
@@ -139,10 +119,11 @@ class SimpleJsonEncoder {
      * @return escaped string.
      */
     @SuppressWarnings("checkstyle:cyclomaticcomplexity")
-    private static String escapeString(final String str) {
+    private static StringBuilder escapeString(final String str) {
         final StringBuilder sb = new StringBuilder(str.length());
 
-        for (final char ch : str.toCharArray()) {
+        for (int i = 0; i < str.length(); i++) {
+            final char ch = str.charAt(i);
             switch (ch) {
                 case QUOTE:
                 case '\\':
@@ -170,7 +151,7 @@ class SimpleJsonEncoder {
             }
         }
 
-        return sb.toString();
+        return sb;
     }
 
     /**
@@ -194,15 +175,6 @@ class SimpleJsonEncoder {
         }
 
         return "\\u" + prefix + Integer.toHexString(ch);
-    }
-
-    public void end() {
-        if (closed) {
-            return;
-        }
-
-        append(CLOSE_BRACE);
-        closed = true;
     }
 
 }

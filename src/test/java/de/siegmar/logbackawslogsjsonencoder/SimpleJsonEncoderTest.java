@@ -30,7 +30,7 @@ class SimpleJsonEncoderTest {
 
     @Test
     void string() {
-        enc.appendToJSON("aaa", "bbb");
+        enc.append("aaa", "bbb");
         assertThat(produce()).isEqualTo("{\"aaa\":\"bbb\"}");
     }
 
@@ -41,69 +41,69 @@ class SimpleJsonEncoderTest {
 
     @Test
     void number() {
-        enc.appendToJSON("aaa", 123);
+        enc.append("aaa", 123);
         assertThat(produce()).isEqualTo("{\"aaa\":123}");
     }
 
     @Test
     void quote() {
-        enc.appendToJSON("aaa", "\"");
+        enc.append("aaa", "\"");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\\"\"}");
     }
 
     @Test
     void reverseSolidus() {
-        enc.appendToJSON("aaa", "\\");
+        enc.append("aaa", "\\");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\\\\"}");
     }
 
     @Test
     void solidus() {
-        enc.appendToJSON("aaa", "/");
+        enc.append("aaa", "/");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\/\"}");
     }
 
     @Test
     void backspace() {
-        enc.appendToJSON("aaa", "\b");
+        enc.append("aaa", "\b");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\b\"}");
     }
 
     @Test
     void formFeed() {
-        enc.appendToJSON("aaa", "\f");
+        enc.append("aaa", "\f");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\f\"}");
     }
 
     @Test
     void newline() {
-        enc.appendToJSON("aaa", "\n");
+        enc.append("aaa", "\n");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\n\"}");
     }
 
     @Test
     void carriageReturn() {
-        enc.appendToJSON("aaa", "\r");
+        enc.append("aaa", "\r");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\r\"}");
     }
 
     @Test
     void tab() {
-        enc.appendToJSON("aaa", "\t");
+        enc.append("aaa", "\t");
         assertThat(produce()).isEqualTo("{\"aaa\":\"\\t\"}");
     }
 
     @Test
     @SuppressWarnings("checkstyle:avoidescapedunicodecharacters")
     void unicode() {
-        enc.appendToJSON("\u0002", "\u0007\u0019");
+        enc.append("\u0002", "\u0007\u0019");
         assertThat(produce()).isEqualTo("{\"\\u0002\":\"\\u0007\\u0019\"}");
     }
 
     @Test
     void multipleFields() {
-        enc.appendToJSON("bbb", "ccc");
-        enc.appendToJSON("ddd", 123);
+        enc.append("bbb", "ccc");
+        enc.append("ddd", 123);
 
         assertThat(produce()).isEqualTo("{\"bbb\":\"ccc\",\"ddd\":123}");
     }

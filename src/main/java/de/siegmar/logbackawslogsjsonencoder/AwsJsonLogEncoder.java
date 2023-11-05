@@ -20,19 +20,19 @@
 package de.siegmar.logbackawslogsjsonencoder;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Marker;
+import org.slf4j.event.KeyValuePair;
 
-import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.encoder.EncoderBase;
 
 /**
@@ -40,71 +40,102 @@ import ch.qos.logback.core.encoder.EncoderBase;
  */
 public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
 
-    private static final int INITIAL_BUF_SIZE = 128;
+    private static final int INITIAL_BUFFER_SIZE = 256;
 
-    private static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ";
-    private static final String DEFAULT_MESSAGE_PATTERN = "%m%nopex";
-    private static final String DEFAULT_FULL_MESSAGE_PATTERN = "%m%n";
+    private final Map<String, Object> staticFields = new LinkedHashMap<>();
+    private final List<BiConsumer<SimpleJsonEncoder, ILoggingEvent>> mappers = new ArrayList<>();
+    private final List<BiConsumer<SimpleJsonEncoder, ILoggingEvent>> customMappers = new ArrayList<>();
 
-    /**
-     * Default timestamp format is in conjunction with {@code awslogs-datetime-format}
-     * of {@code %Y-%m-%dT%H:%M:%S.%f%z`}.
-     */
-    private String dateTimeFormat = DEFAULT_DATETIME_FORMAT;
-
-    /**
-     * DateTimeFormatter that is configured with the pattern of {@code dateTimeFormat}.
-     */
-    private DateTimeFormatter dateTimeFormatter;
-
-    /**
-     * If true, the raw message (with argument placeholders) will be included, too. Default: false.
-     */
+    private boolean includeTimestamp = true;
+    private boolean includeNanoseconds;
+    private boolean includeSequenceNumber;
+    private boolean includeLevelName = true;
+    private boolean includeThreadName = true;
+    private boolean includeLoggerName = true;
+    private boolean includeFormattedMessage = true;
     private boolean includeRawMessage;
-
-    /**
-     * If true, logback markers will be included, too. Default: true.
-     */
+    private boolean includeStacktrace = true;
+    private boolean includeRootCause;
     private boolean includeMarker = true;
+    private boolean includeMdc = true;
+    private boolean includeKeyValues = true;
+    private boolean includeCaller;
 
-    /**
-     * If true, MDC keys/values will be included, too. Default: true.
-     */
-    private boolean includeMdcData = true;
-
-    /**
-     * If true, caller data (source file-, method-, class name and line) will be included, too.
-     * Default: false.
-     */
-    private boolean includeCallerData;
-
-    /**
-     * If true, root cause exception of the exception passed with the log message will be
-     * exposed in the exception field. Default: false.
-     */
-    private boolean includeRootCauseData;
-
-    /**
-     * Message format for messages without an exception. Default: `"%m%nopex"`.
-     */
-    private PatternLayout messageLayout;
-
-    /**
-     * Message format for messages with an exception. Default: `"%m%n"`.
-     */
-    private PatternLayout fullMessageLayout;
-
-    /**
-     * Additional, static fields to include. Defaults: none.
-     */
-    private Map<String, Object> staticFields = new HashMap<>();
-
-    public String getDateTimeFormat() {
-        return dateTimeFormat;
+    public Map<String, Object> getStaticFields() {
+        return staticFields;
     }
 
-    public void setDateTimeFormat(final String dateTimeFormat) {
-        this.dateTimeFormat = dateTimeFormat;
+    public void addStaticField(final String staticField) {
+        final String[] split = staticField.split(":", 2);
+        if (split.length == 2) {
+            addField(staticFields, split[0].trim(), split[1].trim());
+        } else {
+            addWarn("staticField must be in format key:value - rejecting '" + staticField + "'");
+        }
+    }
+
+    public List<BiConsumer<SimpleJsonEncoder, ILoggingEvent>> getCustomMappers() {
+        return customMappers;
+    }
+
+    public void addCustomMapper(final BiConsumer<SimpleJsonEncoder, ILoggingEvent> customMapper) {
+        customMappers.add(customMapper);
+    }
+
+    public boolean isIncludeTimestamp() {
+        return includeTimestamp;
+    }
+
+    public void setIncludeTimestamp(final boolean includeTimestamp) {
+        this.includeTimestamp = includeTimestamp;
+    }
+
+    public boolean isIncludeNanoseconds() {
+        return includeNanoseconds;
+    }
+
+    public void setIncludeNanoseconds(final boolean includeNanoseconds) {
+        this.includeNanoseconds = includeNanoseconds;
+    }
+
+    public boolean isIncludeSequenceNumber() {
+        return includeSequenceNumber;
+    }
+
+    public void setIncludeSequenceNumber(final boolean includeSequenceNumber) {
+        this.includeSequenceNumber = includeSequenceNumber;
+    }
+
+    public boolean isIncludeLevelName() {
+        return includeLevelName;
+    }
+
+    public void setIncludeLevelName(final boolean includeLevelName) {
+        this.includeLevelName = includeLevelName;
+    }
+
+    public boolean isIncludeThreadName() {
+        return includeThreadName;
+    }
+
+    public void setIncludeThreadName(final boolean includeThreadName) {
+        this.includeThreadName = includeThreadName;
+    }
+
+    public boolean isIncludeLoggerName() {
+        return includeLoggerName;
+    }
+
+    public void setIncludeLoggerName(final boolean includeLoggerName) {
+        this.includeLoggerName = includeLoggerName;
+    }
+
+    public boolean isIncludeFormattedMessage() {
+        return includeFormattedMessage;
+    }
+
+    public void setIncludeFormattedMessage(final boolean includeFormattedMessage) {
+        this.includeFormattedMessage = includeFormattedMessage;
     }
 
     public boolean isIncludeRawMessage() {
@@ -115,6 +146,22 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         this.includeRawMessage = includeRawMessage;
     }
 
+    public boolean isIncludeStacktrace() {
+        return includeStacktrace;
+    }
+
+    public void setIncludeStacktrace(final boolean includeStacktrace) {
+        this.includeStacktrace = includeStacktrace;
+    }
+
+    public boolean isIncludeRootCause() {
+        return includeRootCause;
+    }
+
+    public void setIncludeRootCause(final boolean includeRootCause) {
+        this.includeRootCause = includeRootCause;
+    }
+
     public boolean isIncludeMarker() {
         return includeMarker;
     }
@@ -123,61 +170,28 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         this.includeMarker = includeMarker;
     }
 
-    public boolean isIncludeMdcData() {
-        return includeMdcData;
+    public boolean isIncludeMdc() {
+        return includeMdc;
     }
 
-    public void setIncludeMdcData(final boolean includeMdcData) {
-        this.includeMdcData = includeMdcData;
+    public void setIncludeMdc(final boolean includeMdc) {
+        this.includeMdc = includeMdc;
     }
 
-    public boolean isIncludeCallerData() {
-        return includeCallerData;
+    public boolean isIncludeKeyValues() {
+        return includeKeyValues;
     }
 
-    public void setIncludeCallerData(final boolean includeCallerData) {
-        this.includeCallerData = includeCallerData;
+    public void setIncludeKeyValues(final boolean includeKeyValues) {
+        this.includeKeyValues = includeKeyValues;
     }
 
-    public boolean isIncludeRootCauseData() {
-        return includeRootCauseData;
+    public boolean isIncludeCaller() {
+        return includeCaller;
     }
 
-    public void setIncludeRootCauseData(final boolean includeRootCauseData) {
-        this.includeRootCauseData = includeRootCauseData;
-    }
-
-    public PatternLayout getMessageLayout() {
-        return messageLayout;
-    }
-
-    public void setMessageLayout(final PatternLayout messageLayout) {
-        this.messageLayout = messageLayout;
-    }
-
-    public PatternLayout getFullMessageLayout() {
-        return fullMessageLayout;
-    }
-
-    public void setFullMessageLayout(final PatternLayout fullMessageLayout) {
-        this.fullMessageLayout = fullMessageLayout;
-    }
-
-    public Map<String, Object> getStaticFields() {
-        return staticFields;
-    }
-
-    public void setStaticFields(final Map<String, Object> staticFields) {
-        this.staticFields = Objects.requireNonNull(staticFields);
-    }
-
-    public void addStaticField(final String staticField) {
-        final String[] split = staticField.split(":", 2);
-        if (split.length == 2) {
-            addField(staticFields, split[0].trim(), split[1].trim());
-        } else {
-            addWarn("staticField must be in format key:value - rejecting '" + staticField + "'");
-        }
+    public void setIncludeCaller(final boolean includeCaller) {
+        this.includeCaller = includeCaller;
     }
 
     private void addField(final Map<String, Object> dst, final String key, final String value) {
@@ -190,132 +204,131 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
         }
     }
 
+    @SuppressWarnings({"checkstyle:NPathComplexity", "checkstyle:CyclomaticComplexity"})
     @Override
     public void start() {
-        dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormat)
-            .withZone(ZoneId.systemDefault());
+        if (includeTimestamp) {
+            mappers.add((json, event) -> json.append("timestamp", event.getTimeStamp()));
+        }
+        if (includeNanoseconds) {
+            mappers.add((json, event) -> json.append("nanoseconds", event.getNanoseconds()));
+        }
+        if (includeSequenceNumber) {
+            mappers.add((json, event) -> json.append("sequenceNumber", event.getSequenceNumber()));
+        }
+        if (includeLevelName) {
+            mappers.add((json, event) -> json.append("level", event.getLevel().toString()));
+        }
+        if (includeThreadName) {
+            mappers.add((json, event) -> json.append("thread", event.getThreadName()));
+        }
+        if (includeLoggerName) {
+            mappers.add((json, event) -> json.append("logger", event.getLoggerName()));
+        }
+        if (includeFormattedMessage) {
+            mappers.add((json, event) -> json.append("message", event.getFormattedMessage()));
+        }
+        if (includeRawMessage) {
+            mappers.add((json, event) -> json.append("rawMessage", event.getMessage()));
+        }
+        if (includeMarker) {
+            mappers.add((json, event) -> appendMarker(json, event.getMarkerList()));
+        }
+        if (includeMdc) {
+            mappers.add((json, event) -> appendMdc(json, event.getMDCPropertyMap()));
+        }
+        if (includeKeyValues) {
+            mappers.add((json, event) -> appendKeyValues(json, event.getKeyValuePairs()));
+        }
+        if (includeCaller) {
+            mappers.add((json, event) -> appendCaller(json, event.getCallerData()));
+        }
+        if (includeStacktrace) {
+            mappers.add((json, event) -> appendThrowable(json, event.getThrowableProxy()));
+        }
+        if (includeRootCause) {
+            mappers.add((json, event) -> appendRootCause(json, event.getThrowableProxy()));
+        }
+        if (!staticFields.isEmpty()) {
+            mappers.add((json, event) -> appendStaticFields(json, staticFields));
+        }
 
-        if (messageLayout == null) {
-            messageLayout = buildPattern(DEFAULT_MESSAGE_PATTERN);
-        }
-        if (fullMessageLayout == null) {
-            fullMessageLayout = buildPattern(DEFAULT_FULL_MESSAGE_PATTERN);
-        }
+        mappers.addAll(customMappers);
 
         super.start();
     }
 
-    private PatternLayout buildPattern(final String pattern) {
-        final PatternLayout patternLayout = new PatternLayout();
-        patternLayout.setContext(getContext());
-        patternLayout.setPattern(pattern);
-        patternLayout.start();
-        return patternLayout;
-    }
-
     @Override
     public byte[] encode(final ILoggingEvent event) {
-        final StringBuilder sb = new StringBuilder(INITIAL_BUF_SIZE);
-        final SimpleJsonEncoder json = new SimpleJsonEncoder(sb);
+        final StringBuilder sb = new StringBuilder(INITIAL_BUFFER_SIZE);
 
-        final Instant timestamp = Instant.ofEpochMilli(event.getTimeStamp());
-
-        json.appendToJSON("timestamp", dateTimeFormatter.format(timestamp))
-            .appendToJSON("level", event.getLevel().toString())
-            .appendToJSON("logger", event.getLoggerName())
-            .appendToJSON("thread", event.getThreadName())
-            .appendToJSON("message", messageLayout.doLayout(event));
-
-        if (event.getThrowableProxy() != null) {
-            json.appendToJSON("full_message", fullMessageLayout.doLayout(event));
-        }
-
-        if (includeRawMessage) {
-            json.appendToJSON("raw_message", event.getMessage());
-        }
-
-        if (includeMarker) {
-            final Marker marker = event.getMarker();
-            if (marker != null) {
-                json.appendToJSON("marker", marker.getName());
-            }
-        }
-
-        if (includeMdcData) {
-            append(json, "mdc", buildMdcData(event.getMDCPropertyMap()));
-        }
-
-        if (includeCallerData) {
-            append(json, "caller_data", buildCallerData(event.getCallerData()));
-        }
-
-        if (includeRootCauseData) {
-            append(json, "root_exception_data",
-                buildRootExceptionData(event.getThrowableProxy()));
-        }
-
-        if (!staticFields.isEmpty()) {
-            json.appendToJSON("static_fields", staticFields);
-        }
-
+        final var json = new SimpleJsonEncoder(sb);
+        mappers.forEach(m -> m.accept(json, event));
         json.end();
+
         sb.append(System.lineSeparator());
 
         return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    private void append(final SimpleJsonEncoder json, final String key,
-                        final Map<String, Object> values) {
-        if (!values.isEmpty()) {
-            json.appendToJSON(key, values);
+    private static void appendMarker(final SimpleJsonEncoder json, final List<Marker> markerList) {
+        if (markerList == null || markerList.isEmpty()) {
+            return;
         }
+
+        json.appendObject("markers", j ->
+            markerList.forEach(marker -> j.append(marker.getName(), 1)));
     }
 
-    private Map<String, Object> buildMdcData(final Map<String, String> mdcProperties) {
+    private static void appendMdc(final SimpleJsonEncoder json, final Map<String, String> mdcProperties) {
         if (mdcProperties == null || mdcProperties.isEmpty()) {
-            return Collections.emptyMap();
+            return;
         }
 
-        final Map<String, Object> additionalFields = new HashMap<>();
-        mdcProperties.entrySet().stream()
-            .filter(entry -> entry.getValue() != null)
-            .forEach(entry -> addField(additionalFields, entry.getKey(), entry.getValue()));
-
-        return additionalFields;
+        json.appendObject("mdc", j ->
+            mdcProperties.forEach(j::append));
     }
 
-    private Map<String, Object> buildCallerData(final StackTraceElement[] callerData) {
-        if (callerData == null || callerData.length == 0) {
-            return Collections.emptyMap();
+    private static void appendKeyValues(final SimpleJsonEncoder json, final List<KeyValuePair> keyValuePairs) {
+        if (keyValuePairs == null || keyValuePairs.isEmpty()) {
+            return;
         }
 
-        final StackTraceElement first = callerData[0];
-
-        final Map<String, Object> callerDataMap = new HashMap<>(4);
-        callerDataMap.put("source_file_name", first.getFileName());
-        callerDataMap.put("source_method_name", first.getMethodName());
-        callerDataMap.put("source_class_name", first.getClassName());
-        callerDataMap.put("source_line_number", first.getLineNumber());
-
-        return callerDataMap;
+        json.appendObject("keyValues", j ->
+            keyValuePairs.forEach(kvp -> j.append(kvp.key, kvp.value)));
     }
 
-    private Map<String, Object> buildRootExceptionData(final IThrowableProxy throwableProxy) {
-        final IThrowableProxy rootException = getRootException(throwableProxy);
-        if (rootException == null) {
-            return Collections.emptyMap();
+    private static void appendCaller(final SimpleJsonEncoder json, final StackTraceElement[] stackTraceElements) {
+        if (stackTraceElements == null || stackTraceElements.length == 0) {
+            return;
         }
 
-        final Map<String, Object> exceptionDataMap = new HashMap<>(2);
-        exceptionDataMap.put("root_cause_class_name", rootException.getClassName());
-        exceptionDataMap.put("root_cause_message", rootException.getMessage());
-
-        return exceptionDataMap;
+        final StackTraceElement first = stackTraceElements[0];
+        json.appendObject("caller", j -> j
+            .append("file", first.getFileName())
+            .append("line", first.getLineNumber())
+            .append("class", first.getClassName())
+            .append("method", first.getMethodName()));
     }
 
-    private IThrowableProxy getRootException(final IThrowableProxy throwableProxy) {
+    private static void appendThrowable(final SimpleJsonEncoder json, final IThrowableProxy throwableProxy) {
         if (throwableProxy == null) {
-            return null;
+            return;
+        }
+
+        json.append("stacktrace", ThrowableProxyUtil.asString(throwableProxy));
+    }
+
+    private static void appendRootCause(final SimpleJsonEncoder json, final IThrowableProxy throwableProxy) {
+        findRootException(throwableProxy).ifPresent(rootException ->
+            json.appendObject("rootCause", j -> j
+                .append("class", rootException.getClassName())
+                .append("message", rootException.getMessage())));
+    }
+
+    private static Optional<IThrowableProxy> findRootException(final IThrowableProxy throwableProxy) {
+        if (throwableProxy == null) {
+            return Optional.empty();
         }
 
         IThrowableProxy rootCause = throwableProxy;
@@ -323,7 +336,12 @@ public class AwsJsonLogEncoder extends EncoderBase<ILoggingEvent> {
             rootCause = rootCause.getCause();
         }
 
-        return rootCause;
+        return Optional.of(rootCause);
+    }
+
+    private static void appendStaticFields(final SimpleJsonEncoder json, final Map<String, Object> staticFields) {
+        json.appendObject("staticFields", j ->
+            staticFields.forEach(j::append));
     }
 
     @Override
