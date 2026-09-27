@@ -4,6 +4,17 @@
 [![javadoc](https://javadoc.io/badge2/de.siegmar/logback-awslogs-json-encoder/javadoc.svg)](https://javadoc.io/doc/de.siegmar/logback-awslogs-json-encoder)
 [![Maven Central](https://img.shields.io/maven-central/v/de.siegmar/logback-awslogs-json-encoder.svg)](https://central.sonatype.com/artifact/de.siegmar/logback-awslogs-json-encoder)
 
+> [!IMPORTANT]
+> This project is no longer maintained and has been archived.
+> Structured JSON logging that works well with CloudWatch Logs Insights is now available elsewhere:
+>
+> - **Spring Boot 3.4+**: use the built-in [structured logging](https://docs.spring.io/spring-boot/reference/features/logging.html#features.logging.structured),
+>   e.g. `logging.structured.format.console=ecs`.
+> - **Plain Logback**: use the [ECS Logback encoder](https://www.elastic.co/guide/en/ecs-logging/java/current/setup.html)
+>   (`co.elastic.logging:logback-ecs-encoder`).
+>
+> Existing releases remain available on Maven Central.
+
 Logback encoder for producing JSON output that is handled by
 AWS [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html). This
 library has no external dependencies and thus very light footprint.
